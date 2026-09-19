@@ -1,9 +1,9 @@
 /* Sonara — service worker: cachea estáticos y audio ya reproducido para uso offline. */
 'use strict';
 
-const STATIC_CACHE = 'sonara-static-v2';
+const STATIC_CACHE = 'sonara-static-v3';
 const AUDIO_CACHE = 'sonara-audio-v1';
-const STATIC_ASSETS = ['/static/css/app.css?v=4', '/static/js/app.js?v=4', '/static/js/player.js?v=4', '/static/icons/icon.svg'];
+const STATIC_ASSETS = ['/static/css/app.css?v=4', '/static/js/app.js?v=4', '/static/js/player.js?v=4', '/static/icons/icon.svg', '/static/images/logo.png', '/static/manifest.json'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(STATIC_CACHE).then((c) => c.addAll(STATIC_ASSETS)).then(() => self.skipWaiting()));
