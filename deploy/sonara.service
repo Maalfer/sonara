@@ -1,0 +1,35 @@
+[Unit]
+Description=Sonara (Django + gunicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/sonara
+EnvironmentFile=/var/www/sonara/.env
+Environment=HOME=/var/www/sonara
+Environment=DJANGO_SETTINGS_MODULE=config.settings
+ExecStart=/var/www/sonara/venv/bin/gunicorn \
+    config.wsgi:application \
+    --worker-class gthread \
+    --workers 2 \
+    --threads 4 \
+    --bind 127.0.0.1:8011 \
+    --timeout 180 \
+    --graceful-timeout 30 \
+    --access-logfile - \
+    --error-logfile -
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=true
+ReadWritePaths=/var/www/sonara
+
+[Install]
+WantedBy=multi-user.target

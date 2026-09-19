@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión — Sonara{% endblock %}
+{% block body_class %}login-body{% endblock %}
+{% block content %}
+<div class="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="/static/icons/icon.svg" alt="" width="56" height="56">
+      <h1>Sonara</h1>
+    </div>
+    <p class="login-sub">Tu biblioteca de música personal</p>
+    {% if error %}<div class="login-error">{{ error }}</div>{% endif %}
+    <form method="post" class="login-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="username">Usuario</label>
+        <input type="text" id="username" name="username" autocomplete="username" autofocus required>
+      </div>
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

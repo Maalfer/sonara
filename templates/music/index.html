@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}Sonara{% endblock %}
+{% block body_class %}app-body{% endblock %}
+
+{% block content %}
+<div id="app" class="app-shell">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="/static/icons/icon.svg" alt="" width="32" height="32">
+      <span>Sonara</span>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav">
+      <button class="nav-item active" data-nav="all">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v9.28a4.39 4.39 0 00-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/></svg>
+        <span>Toda la música</span>
+      </button>
+      <button class="nav-item" data-nav="favorites">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        <span>Favoritas</span>
+      </button>
+      <button class="nav-item" data-nav="top">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+        <span>Más escuchadas</span>
+      </button>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    {% if user.is_staff %}
+    <a href="/panel/" class="nav-item sidebar-admin-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+      <span>Administración</span>
+    </a>
+    {% endif %}
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="brand">
+        <img src="/static/icons/icon.svg" alt="" width="28" height="28">
+        <span>Sonara</span>
+      </div>
+
+      <div class="search-bar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" id="search-input" placeholder="Buscar canciones, artistas..." autocomplete="off">
+        <button class="icon-btn hidden" id="search-clear" title="Limpiar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="icon-btn" id="btn-theme-toggle" title="Cambiar tema">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+        </button>
+        <div class="user-menu">
+          <button class="user-avatar" id="user-avatar-btn" title="{{ user.username }}">{{ user.username|slice:":1"|upper }}</button>
+          <div class="user-dropdown hidden" id="user-dropdown">
+            <div class="user-dropdown-name">{{ user.username }} {% if user.is_staff %}<span class="badge badge-admin">Admin</span>{% endif %}</div>
+            {% if user.is_staff %}<a href="/panel/" class="user-dropdown-item">Administración</a>{% endif %}
+            <a href="/logout/" class="user-dropdown-item">Cerrar sesión</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <nav class="chip-nav" id="chip-nav">
+      <button class="chip active" data-nav="all">Toda la música</button>
+      <button class="chip" data-nav="favorites">Favoritas</button>
+      <button class="chip" data-nav="top">Más escuchadas</button>
+    </nav>
+
+    <main id="main-content">
+      <div class="content-toolbar">
+        <div class="content-title" id="content-title">Toda la música</div>
+        <div class="toolbar-actions">
+          <select id="sort-select" class="select" title="Ordenar">
+            <option value="recent">Recientes</option>
+            <option value="oldest">Más antiguas</option>
+            <option value="title">Título (A-Z)</option>
+            <option value="artist">Artista (A-Z)</option>
+          </select>
+          <div class="view-toggle" role="group" aria-label="Vista">
+            <button class="icon-btn active" id="view-list" title="Vista de lista">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5h18v2H3V5zm0 6h18v2H3v-2zm0 6h18v2H3v-2z"/></svg>
+            </button>
+            <button class="icon-btn" id="view-grid" title="Vista de cuadrícula">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zm-9 9h7v7H4v-7zm9 0h7v7h-7v-7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="content-area"></div>
+    </main>
+  </div>
+
+  <button class="fab" id="open-add-modal" title="Añadir canción">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+  </button>
+
+  <footer class="player-bar hidden" id="player-bar">
+    <input type="range" id="mini-seek" class="mini-seek" min="0" max="100" value="0" step="0.1" title="Progreso" aria-label="Progreso de la canción">
+    <div class="player-row">
+      <div class="player-track" id="player-expand-btn">
+        <img id="player-thumb" class="player-thumb" alt="">
+        <div class="player-meta">
+          <div id="player-title" class="player-title"></div>
+          <div id="player-artist" class="player-artist"></div>
+        </div>
+      </div>
+
+      <div class="player-controls">
+        <button class="icon-btn" id="btn-shuffle" title="Aleatorio">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-prev" title="Anterior">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+        </button>
+        <button class="icon-btn play-btn" id="btn-play-pause" title="Reproducir/Pausar">
+          <svg id="icon-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="icon-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-next" title="Siguiente">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-repeat" title="Repetir">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+        </button>
+      </div>
+
+      <div class="player-volume">
+        <button class="icon-btn" id="btn-mute" title="Silenciar">
+          <svg id="icon-vol" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0014 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        </button>
+        <input type="range" id="volume-slider" min="0" max="100" value="100" class="slider">
+      </div>
+    </div>
+  </footer>
+
+  <!-- Now playing (fullscreen) -->
+  <div id="player-fullscreen" class="player-fullscreen hidden">
+    <button class="icon-btn pf-close" id="pf-close" title="Cerrar">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+    </button>
+    <img id="pf-thumb" class="pf-thumb" alt="">
+    <div id="pf-title" class="pf-title"></div>
+    <div id="pf-artist" class="pf-artist"></div>
+    <div class="pf-seek-row">
+      <span id="pf-current" class="pf-time">0:00</span>
+      <input type="range" id="pf-seek" min="0" max="100" value="0" step="0.1" class="slider seek-slider">
+      <span id="pf-duration" class="pf-time">0:00</span>
+    </div>
+    <div class="pf-controls">
+      <button class="icon-btn" id="pf-shuffle" title="Aleatorio">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+      </button>
+      <button class="icon-btn" id="pf-prev" title="Anterior">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+      </button>
+      <button class="icon-btn play-btn pf-play-btn" id="pf-play-pause" title="Reproducir/Pausar">
+        <svg id="pf-icon-play" width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <svg id="pf-icon-pause" width="30" height="30" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+      </button>
+      <button class="icon-btn" id="pf-next" title="Siguiente">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+      </button>
+      <button class="icon-btn" id="pf-repeat" title="Repetir">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+      </button>
+    </div>
+    <div class="pf-upnext" id="pf-upnext"></div>
+  </div>
+
+  <audio id="audio-player" preload="metadata"></audio>
+
+  <!-- Add Song Modal -->
+  <div id="modal-add-song" class="modal hidden">
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Añadir canciones</h2>
+        <button class="modal-close" id="modal-close-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Pega uno o varios enlaces de YouTube (uno por línea) y extraeremos el audio automáticamente.</p>
+        <textarea id="yt-urls" rows="4" placeholder="https://youtube.com/watch?v=...&#10;https://youtu.be/..."></textarea>
+        <button class="btn btn-primary btn-full" id="btn-add-song">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          Añadir a la biblioteca
+        </button>
+        <ul id="add-song-status" class="add-status-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm dialog (reusable) -->
+  <div id="confirm-dialog" class="modal hidden">
+    <div class="modal-backdrop" id="confirm-backdrop"></div>
+    <div class="modal-content confirm-content">
+      <p id="confirm-message" class="confirm-message"></p>
+      <div class="confirm-actions">
+        <button class="btn" id="confirm-cancel">Cancelar</button>
+        <button class="btn btn-danger" id="confirm-ok">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Song context menu -->
+  <div id="song-context-menu" class="context-menu hidden">
+    <button class="ctx-item" id="ctx-play">Reproducir</button>
+    <button class="ctx-item" id="ctx-favorite">Añadir a favoritas</button>
+    <button class="ctx-item ctx-danger" id="ctx-delete">Eliminar canción</button>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.INITIAL_SONGS = {{ songs_json|safe }};
+window.CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="/static/js/player.js?v=4"></script>
+<script src="/static/js/app.js?v=4"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {}));
+}
+</script>
+{% endblock %}

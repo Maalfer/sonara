@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Administración — Sonara{% endblock %}
+{% block body_class %}panel-body{% endblock %}
+
+{% block content %}
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <img src="/static/icons/icon.svg" alt="" width="30" height="30">
+      <span>Sonara</span>
+    </div>
+    <div class="topbar-actions">
+      <a href="/" class="btn">← Volver a la biblioteca</a>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <div class="panel-wrap">
+      <h1 class="panel-title">Administración de usuarios</h1>
+
+      {% if messages %}
+      <div class="panel-messages">
+        {% for message in messages %}
+        <div class="panel-message panel-message-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="panel-card">
+        <h2>Crear usuario</h2>
+        <form method="post" action="{% url 'panel_create_user' %}" class="form-row">
+          {% csrf_token %}
+          <input type="text" name="username" placeholder="Nombre de usuario" required minlength="3">
+          <input type="password" name="password" placeholder="Contraseña (mín. 8 caracteres)" required minlength="8">
+          <select name="role" class="select">
+            <option value="user">Usuario</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button type="submit" class="btn btn-primary">Crear</button>
+        </form>
+      </div>
+
+      <div class="panel-card">
+        <h2>Usuarios registrados ({{ users|length }})</h2>
+        <div class="table-scroll">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Canciones</th>
+                <th>Alta</th>
+                <th>Nueva contraseña</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+              <tr>
+                <td class="u-name">
+                  {{ u.username }}
+                  {% if u == request.user %}<span class="you-tag">(tú)</span>{% endif %}
+                </td>
+                <td><span class="badge {% if u.is_staff %}badge-admin{% else %}badge-user{% endif %}">{% if u.is_staff %}Admin{% else %}Usuario{% endif %}</span></td>
+                <td><span class="badge {% if u.is_active %}badge-active{% else %}badge-banned{% endif %}">{% if u.is_active %}Activo{% else %}Baneado{% endif %}</span></td>
+                <td>{{ u.song_count }}</td>
+                <td>{{ u.date_joined|date:"d/m/Y" }}</td>
+                <td>
+                  <form method="post" action="{% url 'panel_set_password' u.id %}" class="form-inline">
+                    {% csrf_token %}
+                    <input type="password" name="password" placeholder="Nueva contraseña" minlength="8" required>
+                    <button type="submit" class="btn btn-sm">Cambiar</button>
+                  </form>
+                </td>
+                <td class="table-actions">
+                  {% if u != request.user %}
+                  <form method="post" action="{% url 'panel_toggle_role' u.id %}" class="form-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm">{% if u.is_staff %}Quitar admin{% else %}Hacer admin{% endif %}</button>
+                  </form>
+                  <form method="post" action="{% url 'panel_toggle_ban' u.id %}" class="form-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm {% if u.is_active %}btn-warn{% endif %}">{% if u.is_active %}Banear{% else %}Reactivar{% endif %}</button>
+                  </form>
+                  <form method="post" action="{% url 'panel_delete_user' u.id %}" class="form-inline" onsubmit="return confirm('¿Eliminar a {{ u.username }} y toda su biblioteca? Esta acción no se puede deshacer.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                  </form>
+                  {% else %}
+                  <span class="text-dim">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
