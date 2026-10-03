@@ -619,14 +619,4 @@ document.addEventListener('DOMContentLoaded', () => {
   Sidebar.init();
   Library.init(window.INITIAL_SONGS);
   AddModal.init();
-
-  const avatarBtn = document.getElementById('user-avatar-btn');
-  const dropdown = document.getElementById('user-dropdown');
-  if (avatarBtn && dropdown) {
-    avatarBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      dropdown.classList.toggle('hidden');
-    });
-    document.addEventListener('click', () => dropdown.classList.add('hidden'));
-  }
 });

@@ -6,7 +6,7 @@
 
 **Tu biblioteca de música personal.** Pega un enlace de YouTube, descarga el audio y reprodúcelo desde cualquier dispositivo.
 
-![version](https://img.shields.io/badge/versi%C3%B3n-1.0.0-8a5cff)
+![version](https://img.shields.io/badge/versi%C3%B3n-1.1.0-8a5cff)
 
 [Características](#-características) · [Capturas](#-capturas) · [Despliegue](#-despliegue-con-docker) · [Configuración](#-configuración) · [Changelog](CHANGELOG.md)
 
@@ -140,6 +140,10 @@ Variables de entorno (ver [`.env.example`](.env.example)):
 ├── manage.py              # CLI: initdb, createsuperuser
 └── requirements.txt
 ```
+
+## ⭐ Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Maalfer/sonara&type=Date)](https://star-history.com/#Maalfer/sonara&Date)
 
 ## 📄 Licencia
 

@@ -3,6 +3,17 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico ([SemVer](https://semver.org/lang/es/)): `MAJOR.MINOR.PATCH`.
 
+## [1.1.0] — 2026-10-03
+
+### Añadido
+- Gráfico de historial de estrellas de GitHub en el README.
+- Enlace al repositorio de GitHub al pie del menú lateral.
+
+### Cambiado
+- El menú de usuario (avatar, rol, cerrar sesión) se movió del desplegable de la
+  esquina superior derecha a la parte inferior del menú lateral, junto con el
+  enlace de administración y el de GitHub, dejando la barra superior más limpia.
+
 ## [1.0.0] — 2026-10-03
 
 Primera versión versionada de Sonara.
