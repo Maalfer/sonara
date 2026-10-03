@@ -42,6 +42,12 @@ def require_admin_page(user: User = Depends(require_user_page)) -> User:
     return user
 
 
+def require_admin_api(user: User = Depends(require_user_api)) -> User:
+    if not user.is_staff:
+        raise HTTPException(status_code=403, detail="Solo administradores pueden realizar esta acción.")
+    return user
+
+
 def redirect_to_login_handler(request: Request, exc: RedirectToLogin):
     return RedirectResponse(url="/login/", status_code=303)
 

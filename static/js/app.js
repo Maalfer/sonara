@@ -41,9 +41,11 @@ const Confirm = {
 
 const Theme = {
   KEY: 'sn_theme',
+  COLORS: { dark: '#0b0b12', light: '#ffffff' },
   init() {
     const saved = localStorage.getItem(this.KEY) || 'dark';
     document.documentElement.setAttribute('data-theme', saved);
+    this.syncMetaColor(saved);
     const btn = document.getElementById('btn-theme-toggle');
     if (btn) btn.addEventListener('click', () => this.toggle());
   },
@@ -52,10 +54,16 @@ const Theme = {
     const next = cur === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem(this.KEY, next);
+    this.syncMetaColor(next);
+  },
+  syncMetaColor(theme) {
+    // Mantiene la barra de Android Chrome (theme-color) a juego con el tema activo.
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', this.COLORS[theme] || this.COLORS.dark);
   },
 };
 
-const NAV_LABELS = { all: 'Toda la música', favorites: 'Favoritas', top: 'Más escuchadas', artists: 'Artistas', albums: 'Álbumes' };
+const NAV_LABELS = { all: 'Toda la música', favorites: 'Favoritas', top: 'Más escuchadas', artists: 'Artistas', albums: 'Álbumes', admin: 'Administración' };
 const GROUP_NAVS = ['artists', 'albums'];
 
 const Library = {
@@ -326,9 +334,14 @@ const Library = {
         const sortSelect = document.getElementById('sort-select');
         const viewToggle = document.querySelector('.view-toggle');
         const isGroupNav = GROUP_NAVS.includes(nav);
-        if (viewToggle) viewToggle.classList.toggle('hidden', isGroupNav);
+        if (viewToggle) viewToggle.classList.toggle('hidden', isGroupNav || nav === 'admin');
 
-        if (isGroupNav) {
+        if (nav === 'admin') {
+          if (sortSelect) sortSelect.classList.add('hidden');
+          const titleEl = document.getElementById('content-title');
+          if (titleEl) titleEl.textContent = NAV_LABELS.admin;
+          AdminPanel.load();
+        } else if (isGroupNav) {
           if (sortSelect) sortSelect.classList.add('hidden');
           this.loadGroups();
         } else {
@@ -540,6 +553,145 @@ const AddModal = {
       Toast.show(`${added} ${added === 1 ? 'canción añadida' : 'canciones añadidas'}`, 'success');
       Library.render();
     }
+  },
+};
+
+/* Panel de administración integrado en la SPA (sin recargar página, para que la música no se corte). */
+const AdminPanel = {
+  users: [],
+  currentUserId: null,
+
+  async load() {
+    const area = document.getElementById('content-area');
+    area.innerHTML = '<div class="page-library fade-in"><div class="panel-wrap"><p class="text-dim">Cargando…</p></div></div>';
+    try {
+      const res = await fetch('/api/admin/users', { headers: { 'X-Requested-With': 'fetch' } });
+      if (res.status === 401) { window.location = '/login/'; return; }
+      if (res.status === 403) { Toast.show('Solo administradores pueden acceder aquí', 'error'); return; }
+      const data = await res.json();
+      this.users = data.users || [];
+    } catch (e) {
+      Toast.show('No se pudo cargar el panel de administración', 'error');
+      this.users = [];
+    }
+    this.render();
+  },
+
+  async action(url, body, successReload = true) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': window.CSRF_TOKEN || '' },
+        body: JSON.stringify(body || {}),
+      });
+      const data = await res.json();
+      Toast.show(data.message || (data.success ? 'Hecho' : 'Error'), data.success ? 'success' : 'error', 2500);
+      if (data.success && successReload) await this.load();
+      return data.success;
+    } catch (e) {
+      Toast.show('Error de conexión', 'error');
+      return false;
+    }
+  },
+
+  render() {
+    const area = document.getElementById('content-area');
+    const rows = this.users.map((u) => `
+      <tr>
+        <td class="u-name">
+          ${escapeHtml(u.username)}
+          ${u.id === window.CURRENT_USER_ID ? '<span class="you-tag">(tú)</span>' : ''}
+        </td>
+        <td><span class="badge ${u.is_staff ? 'badge-admin' : 'badge-user'}">${u.is_staff ? 'Admin' : 'Usuario'}</span></td>
+        <td><span class="badge ${u.is_active ? 'badge-active' : 'badge-banned'}">${u.is_active ? 'Activo' : 'Baneado'}</span></td>
+        <td>${u.song_count}</td>
+        <td>${escapeHtml(u.date_joined)}</td>
+        <td>
+          <form class="form-inline" data-action="password" data-id="${u.id}">
+            <input type="password" placeholder="Nueva contraseña" minlength="8" required>
+            <button type="submit" class="btn btn-sm">Cambiar</button>
+          </form>
+        </td>
+        <td class="table-actions">
+          ${u.id === window.CURRENT_USER_ID ? '<span class="text-dim">—</span>' : `
+            <button type="button" class="btn btn-sm" data-action="role" data-id="${u.id}">${u.is_staff ? 'Quitar admin' : 'Hacer admin'}</button>
+            <button type="button" class="btn btn-sm ${u.is_active ? 'btn-warn' : ''}" data-action="ban" data-id="${u.id}">${u.is_active ? 'Banear' : 'Reactivar'}</button>
+            <button type="button" class="btn btn-sm btn-danger" data-action="delete" data-id="${u.id}" data-username="${escapeHtml(u.username)}">Eliminar</button>
+          `}
+        </td>
+      </tr>`).join('');
+
+    area.innerHTML = `
+      <div class="page-library fade-in">
+        <div class="panel-wrap">
+          <div class="panel-card">
+            <h2>Crear usuario</h2>
+            <form class="form-row" id="admin-create-form">
+              <input type="text" name="username" placeholder="Nombre de usuario" required minlength="3">
+              <input type="password" name="password" placeholder="Contraseña (mín. 8 caracteres)" required minlength="8">
+              <select name="role" class="select">
+                <option value="user">Usuario</option>
+                <option value="admin">Admin</option>
+              </select>
+              <button type="submit" class="btn btn-primary">Crear</button>
+            </form>
+          </div>
+          <div class="panel-card">
+            <h2>Usuarios registrados (${this.users.length})</h2>
+            <div class="table-scroll">
+              <table class="users-table">
+                <thead>
+                  <tr>
+                    <th>Usuario</th><th>Rol</th><th>Estado</th><th>Canciones</th><th>Alta</th>
+                    <th>Nueva contraseña</th><th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    this.bindActions();
+  },
+
+  bindActions() {
+    const area = document.getElementById('content-area');
+
+    const createForm = document.getElementById('admin-create-form');
+    if (createForm) {
+      createForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(createForm);
+        await this.action('/api/admin/users', {
+          username: fd.get('username'), password: fd.get('password'), role: fd.get('role'),
+        });
+      });
+    }
+
+    area.querySelectorAll('form[data-action="password"]').forEach((form) => {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = form.querySelector('input');
+        await this.action(`/api/admin/users/${form.dataset.id}/password`, { password: input.value });
+      });
+    });
+
+    area.querySelectorAll('button[data-action="role"]').forEach((btn) => {
+      btn.addEventListener('click', () => this.action(`/api/admin/users/${btn.dataset.id}/role`));
+    });
+
+    area.querySelectorAll('button[data-action="ban"]').forEach((btn) => {
+      btn.addEventListener('click', () => this.action(`/api/admin/users/${btn.dataset.id}/ban`));
+    });
+
+    area.querySelectorAll('button[data-action="delete"]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const ok = await Confirm.ask(`¿Eliminar a ${btn.dataset.username} y toda su biblioteca? Esta acción no se puede deshacer.`);
+        if (ok) this.action(`/api/admin/users/${btn.dataset.id}/delete`);
+      });
+    });
   },
 };
 

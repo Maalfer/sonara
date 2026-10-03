@@ -1,6 +1,9 @@
 {
+  "id": "/",
   "name": "Sonara",
   "short_name": "Sonara",
+  "description": "Tu biblioteca de música personal descargada de YouTube.",
+  "lang": "es",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

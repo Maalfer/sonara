@@ -4,13 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0b12">
+<meta name="color-scheme" content="dark light">
+<!-- iOS: sin esto, la app instalada desde "Compartir → Añadir a pantalla de inicio" se abre
+     dentro de Safari (con barra de URL) en vez de a pantalla completa como una app nativa. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sonara">
 <title>{% block title %}Sonara{% endblock %}</title>
 <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
 <link rel="manifest" href="/static/manifest.json">
-<link rel="stylesheet" href="/static/css/app.css?v=11">
+<link rel="stylesheet" href="/static/css/app.css?v=12">
 {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">

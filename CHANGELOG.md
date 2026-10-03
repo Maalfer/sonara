@@ -3,6 +3,34 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico ([SemVer](https://semver.org/lang/es/)): `MAJOR.MINOR.PATCH`.
 
+## [1.2.0] — 2026-10-03
+
+### Arreglado
+- **La música ya no se corta al entrar en "Administración"**: el panel de
+  administración era una página aparte (`<a href>` con recarga completa, que
+  destruía el reproductor de audio). Ahora es una vista más dentro de la SPA,
+  igual que Artistas/Álbumes — navegar por el menú nunca recarga la página.
+- **PWA en iOS**: faltaban las meta tags de Apple (`apple-mobile-web-app-capable`
+  y similares); sin ellas, la app instalada desde "Añadir a pantalla de inicio"
+  se abría dentro de Safari con barra de URL en vez de a pantalla completa.
+- **Notch / Dynamic Island**: la barra superior, el menú lateral y el botón de
+  cerrar del reproductor a pantalla completa ahora respetan las zonas seguras
+  (`safe-area-inset`) en iPhones con notch.
+- **Seek de audio offline roto tras cachear**: el service worker guardaba la
+  respuesta parcial (`206`) de la primera petición de `Range` tal cual; al
+  buscar otro punto de la canción servía el tramo equivocado porque
+  `Cache.match()` no distingue por cabecera `Range`, solo por URL. Ahora el
+  service worker cachea siempre el fichero completo y recorta el rango
+  correcto él mismo.
+- `theme-color` ya se actualiza al cambiar de tema claro/oscuro (antes se
+  quedaba fijo en oscuro, desentonando con la barra de Chrome en Android).
+- Lista de precaché del service worker desincronizada de la versión real de
+  los assets (`?v=4` cuando ya íbamos por `v=11`); ahora solo precachea
+  archivos sin versión en la URL y el resto se cachea solo al primer uso.
+
+### Añadido
+- `id` y `description` en `manifest.json`.
+
 ## [1.1.0] — 2026-10-03
 
 ### Añadido
