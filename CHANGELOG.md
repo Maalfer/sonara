@@ -3,6 +3,20 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico ([SemVer](https://semver.org/lang/es/)): `MAJOR.MINOR.PATCH`.
 
+## [1.2.1] — 2026-10-03
+
+Pequeñas incongruencias que quedaron tras mover el panel de administración
+a la SPA en 1.2.0.
+
+### Arreglado
+- Los chips rápidos ("Toda la música/Favoritas/Más escuchadas") y la barra
+  de búsqueda seguían visibles en Artistas/Álbumes/Administración, donde no
+  pintan nada — y escribir en el buscador ahí sacaba a la fuerza de esa
+  vista. Ahora se ocultan junto con el resto de controles de biblioteca.
+- Añadir una canción con el botón "+" mientras se veía Artistas/Álbumes/
+  Administración sustituía silenciosamente esa vista por la lista de
+  canciones. Ahora solo refresca la vista si se está viendo la biblioteca.
+
 ## [1.2.0] — 2026-10-03
 
 ### Arreglado

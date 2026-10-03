@@ -545,7 +545,6 @@ const AddModal = {
           added++;
           row.className = 'status-row status-success';
           row.innerHTML = `<span class="status-icon">✓</span><span class="status-url">${escapeHtml(data.song.title)}</span>`;
-          Library.songs.unshift(data.song);
         } else {
           row.className = 'status-row status-error';
           row.innerHTML = `<span class="status-icon">✕</span><span class="status-url">${escapeHtml(data.error || 'Error desconocido')}</span>`;
@@ -559,7 +558,11 @@ const AddModal = {
     btn.disabled = false;
     if (added > 0) {
       Toast.show(`${added} ${added === 1 ? 'canción añadida' : 'canciones añadidas'}`, 'success');
-      Library.render();
+      // Solo refrescar la vista si estamos viendo la biblioteca de canciones:
+      // en Artistas/Álbumes/Administración no hay que pisar lo que se está viendo.
+      if (!GROUP_NAVS.includes(Library.state.nav) && Library.state.nav !== 'admin') {
+        Library.refresh();
+      }
     }
   },
 };
