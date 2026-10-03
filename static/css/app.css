@@ -337,9 +337,8 @@ textarea { width: 100%; resize: vertical; margin-bottom: 14px; }
 .player-artist { font-size: 0.78rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .player-controls { display: flex; align-items: center; gap: 4px; margin: 0 auto; }
-.play-btn { width: 46px; height: 46px; background: #fff; color: #000; }
-.play-btn:hover { background: #fff; opacity: 0.85; }
-:root[data-theme="light"] .play-btn { background: #17171f; color: #fff; }
+.play-btn { width: 46px; height: 46px; background: var(--accent-grad); color: #fff; box-shadow: 0 2px 10px rgba(138, 92, 255, 0.35); }
+.play-btn:hover { opacity: 0.88; }
 
 .player-volume { display: none; align-items: center; gap: 8px; width: 150px; justify-content: flex-end; }
 @media (min-width: 860px) { .player-volume { display: flex; } }
@@ -365,8 +364,8 @@ textarea { width: 100%; resize: vertical; margin-bottom: 14px; }
 .pf-seek-row { display: flex; align-items: center; gap: 10px; width: min(420px, 90vw); }
 .pf-time { font-size: 0.78rem; color: var(--text-dim); font-variant-numeric: tabular-nums; width: 40px; text-align: center; }
 .pf-controls { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
-.pf-play-btn { width: 62px; height: 62px; background: #fff; color: #000; }
-:root[data-theme="light"] .pf-play-btn { background: #17171f; color: #fff; }
+.pf-play-btn { width: 62px; height: 62px; background: var(--accent-grad); color: #fff; box-shadow: 0 4px 14px rgba(138, 92, 255, 0.35); }
+.pf-play-btn:hover { opacity: 0.88; }
 .pf-upnext { color: var(--text-dim); font-size: 0.82rem; margin-top: 8px; max-width: min(420px, 90vw); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ── Modal ────────────────────────────────────────────────────────── */
