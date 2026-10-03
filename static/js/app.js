@@ -333,8 +333,16 @@ const Library = {
         document.querySelectorAll('[data-nav]').forEach((b) => b.classList.toggle('active', b.dataset.nav === nav));
         const sortSelect = document.getElementById('sort-select');
         const viewToggle = document.querySelector('.view-toggle');
+        const searchBar = document.querySelector('.search-bar');
+        const chipNav = document.getElementById('chip-nav');
         const isGroupNav = GROUP_NAVS.includes(nav);
-        if (viewToggle) viewToggle.classList.toggle('hidden', isGroupNav || nav === 'admin');
+        const isLibraryNav = !isGroupNav && nav !== 'admin';
+
+        // Los filtros/búsqueda de la biblioteca (favoritos, orden, vista, chips rápidos)
+        // solo tienen sentido navegando canciones, no en Artistas/Álbumes/Administración.
+        if (viewToggle) viewToggle.classList.toggle('hidden', !isLibraryNav);
+        if (searchBar) searchBar.classList.toggle('hidden', !isLibraryNav);
+        if (chipNav) chipNav.classList.toggle('hidden', !isLibraryNav);
 
         if (nav === 'admin') {
           if (sortSelect) sortSelect.classList.add('hidden');
