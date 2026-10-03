@@ -21,15 +21,15 @@
       {% if messages %}
       <div class="panel-messages">
         {% for message in messages %}
-        <div class="panel-message panel-message-{{ message.tags }}">{{ message }}</div>
+        <div class="panel-message panel-message-{{ message.tags }}">{{ message.text }}</div>
         {% endfor %}
       </div>
       {% endif %}
 
       <div class="panel-card">
         <h2>Crear usuario</h2>
-        <form method="post" action="{% url 'panel_create_user' %}" class="form-row">
-          {% csrf_token %}
+        <form method="post" action="/panel/create" class="form-row">
+          <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
           <input type="text" name="username" placeholder="Nombre de usuario" required minlength="3">
           <input type="password" name="password" placeholder="Contraseña (mín. 8 caracteres)" required minlength="8">
           <select name="role" class="select">
@@ -60,31 +60,31 @@
               <tr>
                 <td class="u-name">
                   {{ u.username }}
-                  {% if u == request.user %}<span class="you-tag">(tú)</span>{% endif %}
+                  {% if u.id == user.id %}<span class="you-tag">(tú)</span>{% endif %}
                 </td>
                 <td><span class="badge {% if u.is_staff %}badge-admin{% else %}badge-user{% endif %}">{% if u.is_staff %}Admin{% else %}Usuario{% endif %}</span></td>
                 <td><span class="badge {% if u.is_active %}badge-active{% else %}badge-banned{% endif %}">{% if u.is_active %}Activo{% else %}Baneado{% endif %}</span></td>
                 <td>{{ u.song_count }}</td>
-                <td>{{ u.date_joined|date:"d/m/Y" }}</td>
+                <td>{{ u.date_joined|dateformat }}</td>
                 <td>
-                  <form method="post" action="{% url 'panel_set_password' u.id %}" class="form-inline">
-                    {% csrf_token %}
+                  <form method="post" action="/panel/{{ u.id }}/password" class="form-inline">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                     <input type="password" name="password" placeholder="Nueva contraseña" minlength="8" required>
                     <button type="submit" class="btn btn-sm">Cambiar</button>
                   </form>
                 </td>
                 <td class="table-actions">
-                  {% if u != request.user %}
-                  <form method="post" action="{% url 'panel_toggle_role' u.id %}" class="form-inline">
-                    {% csrf_token %}
+                  {% if u.id != user.id %}
+                  <form method="post" action="/panel/{{ u.id }}/role" class="form-inline">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                     <button type="submit" class="btn btn-sm">{% if u.is_staff %}Quitar admin{% else %}Hacer admin{% endif %}</button>
                   </form>
-                  <form method="post" action="{% url 'panel_toggle_ban' u.id %}" class="form-inline">
-                    {% csrf_token %}
+                  <form method="post" action="/panel/{{ u.id }}/ban" class="form-inline">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                     <button type="submit" class="btn btn-sm {% if u.is_active %}btn-warn{% endif %}">{% if u.is_active %}Banear{% else %}Reactivar{% endif %}</button>
                   </form>
-                  <form method="post" action="{% url 'panel_delete_user' u.id %}" class="form-inline" onsubmit="return confirm('¿Eliminar a {{ u.username }} y toda su biblioteca? Esta acción no se puede deshacer.');">
-                    {% csrf_token %}
+                  <form method="post" action="/panel/{{ u.id }}/delete" class="form-inline" onsubmit="return confirm('¿Eliminar a {{ u.username }} y toda su biblioteca? Esta acción no se puede deshacer.');">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                     <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
                   </form>
                   {% else %}

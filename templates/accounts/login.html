@@ -11,7 +11,7 @@
     <p class="login-sub">Tu biblioteca de música personal</p>
     {% if error %}<div class="login-error">{{ error }}</div>{% endif %}
     <form method="post" class="login-form">
-      {% csrf_token %}
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
       <div class="form-group">
         <label for="username">Usuario</label>
         <input type="text" id="username" name="username" autocomplete="username" autofocus required>

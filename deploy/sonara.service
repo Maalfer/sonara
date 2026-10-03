@@ -1,5 +1,5 @@
 [Unit]
-Description=Sonara (Django + gunicorn)
+Description=Sonara (FastAPI + gunicorn/uvicorn)
 After=network.target
 
 [Service]
@@ -9,12 +9,10 @@ Group=www-data
 WorkingDirectory=/var/www/sonara
 EnvironmentFile=/var/www/sonara/.env
 Environment=HOME=/var/www/sonara
-Environment=DJANGO_SETTINGS_MODULE=config.settings
 ExecStart=/var/www/sonara/venv/bin/gunicorn \
-    config.wsgi:application \
-    --worker-class gthread \
+    app.main:app \
+    --worker-class uvicorn.workers.UvicornWorker \
     --workers 2 \
-    --threads 4 \
     --bind 127.0.0.1:8011 \
     --timeout 180 \
     --graceful-timeout 30 \
@@ -22,6 +20,7 @@ ExecStart=/var/www/sonara/venv/bin/gunicorn \
     --error-logfile -
 Restart=on-failure
 RestartSec=5
+MemoryMax=600M
 StandardOutput=journal
 StandardError=journal
 

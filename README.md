@@ -16,16 +16,17 @@
 
 - **Descarga automática** desde YouTube con [yt-dlp](https://github.com/yt-dlp/yt-dlp) + `ffmpeg` (audio MP3 192 kbps).
 - **Biblioteca por usuario** con búsqueda, favoritos, ordenación y contadores de reproducciones.
-- **Reproductor web** con cola, modo aleatorio, repetición y vista *now playing* a pantalla completa.
+- **Reproductor web** con cola, modo aleatorio, repetición, *seek* con soporte de `Range` HTTP y vista *now playing* a pantalla completa.
 - **Panel de administración** para crear usuarios, asignar roles, banear y resetear contraseñas.
 - **PWA instalable** con service worker que cachea el audio reproducido para uso offline.
 - **Diseño oscuro, responsive**, sin dependencias de UI externas.
 
 ## 🛠 Stack
 
-- **Backend:** Python 3.13 · Django 5.1 · gunicorn
-- **Frontend:** JavaScript vanilla · CSS nativo · sin frameworks
-- **Datos:** SQLite · WhiteNoise (estáticos)
+- **Backend:** Python 3.13 · [FastAPI](https://fastapi.tiangolo.com/) · SQLAlchemy 2.0 · gunicorn + worker de uvicorn
+- **Frontend:** JavaScript vanilla · CSS nativo · plantillas Jinja2 · sin frameworks
+- **Datos:** SQLite
+- **Sesión/seguridad:** cookies de sesión firmadas (`itsdangerous`), hash de contraseñas PBKDF2-SHA256 (stdlib), CSRF por token de sesión
 - **Multimedia:** yt-dlp · ffmpeg
 
 ## 📸 Capturas
@@ -71,7 +72,6 @@ docker run -d --name sonara \
   -e SECRET_KEY="$(openssl rand -hex 32)" \
   -e DEBUG=0 \
   -e ALLOWED_HOSTS=tu-dominio.com \
-  -e CSRF_TRUSTED_ORIGINS=https://tu-dominio.com \
   sonara
 ```
 
@@ -89,16 +89,15 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 cp .env.example .env
-# edita .env y define SECRET_KEY, ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS
+# edita .env y define SECRET_KEY y ALLOWED_HOSTS
 
-python manage.py migrate
-python manage.py collectstatic --noinput
+python manage.py initdb
 python manage.py createsuperuser
 
-gunicorn config.wsgi:application --bind 0.0.0.0:8000
+gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
 ```
 
-Detrás de Nginx usa la configuración de `deploy/nginx.conf` como referencia.
+Detrás de Nginx usa la configuración de `deploy/nginx.conf` como referencia (sirve `/static/` directamente desde `static_collected/`, una copia plana de la carpeta `static/`).
 
 ## ⚙ Configuración
 
@@ -106,10 +105,9 @@ Variables de entorno (ver [`.env.example`](.env.example)):
 
 | Variable | Descripción |
 | --- | --- |
-| `SECRET_KEY` | Clave secreta de Django (obligatoria en producción) |
+| `SECRET_KEY` | Clave secreta para firmar las cookies de sesión (obligatoria en producción) |
 | `DEBUG` | `1` para activar modo debug, `0` para producción |
 | `ALLOWED_HOSTS` | Hosts permitidos, separados por coma |
-| `CSRF_TRUSTED_ORIGINS` | Orígenes HTTPS de confianza para CSRF |
 | `DB_PATH` | Ruta al archivo SQLite (opcional) |
 | `MUSIC_UPLOADS_ROOT` | Carpeta donde se guardan los MP3 (opcional) |
 
@@ -117,20 +115,27 @@ Variables de entorno (ver [`.env.example`](.env.example)):
 
 ```
 .
-├── apps/
-│   ├── accounts/    # login, logout, panel admin de usuarios
-│   └── music/       # modelos, descarga yt-dlp, streaming
-├── config/          # settings, urls, wsgi
-├── templates/       # Django templates
+├── app/
+│   ├── main.py        # app FastAPI, middlewares, montaje de /static
+│   ├── config.py       # configuración desde variables de entorno
+│   ├── database.py     # engine SQLAlchemy y sesión por request
+│   ├── models.py        # modelos User y Song
+│   ├── security.py     # hash de contraseñas y tokens CSRF
+│   ├── deps.py          # dependencias de autenticación (login/admin)
+│   ├── flash.py          # mensajes flash de un solo uso en sesión
+│   └── routers/
+│       ├── accounts.py  # login, logout, panel admin de usuarios
+│       └── music.py     # biblioteca, descarga yt-dlp, streaming
+├── templates/           # plantillas Jinja2
 ├── static/
-│   ├── css/         # estilos
-│   ├── js/          # app + player
-│   ├── icons/       # icon.svg (favicon vectorial)
-│   └── images/      # logo.png y derivados (192/512, favicon, apple-touch)
-├── docs/screenshots/ # capturas para el README
-├── deploy/          # nginx.conf y unidad systemd de referencia
+│   ├── css/              # estilos
+│   ├── js/                # app + player
+│   ├── icons/             # icon.svg (favicon vectorial)
+│   └── images/            # logo.png y derivados (192/512, favicon, apple-touch)
+├── docs/screenshots/      # capturas para el README
+├── deploy/                # nginx.conf y unidad systemd de referencia
 ├── Dockerfile
-├── manage.py
+├── manage.py              # CLI: initdb, createsuperuser
 └── requirements.txt
 ```
 
