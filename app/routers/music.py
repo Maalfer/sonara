@@ -46,6 +46,7 @@ def _serialize(song: Song) -> dict:
         "id": song.id,
         "title": song.title,
         "artist": song.artist,
+        "album": song.album,
         "thumbnail": song.thumbnail,
         "duration": song.duration,
         "plays": song.plays,
@@ -68,6 +69,7 @@ def index(request: Request, user: User = Depends(require_user_page), db: Session
             "user": user,
             "songs_json": json.dumps([_serialize(s) for s in songs]),
             "csrf_token": csrf_token,
+            "version": config.VERSION,
         },
     )
 
@@ -78,6 +80,8 @@ def songs_list(
     search: str = "",
     sort: str = "recent",
     favorites: str = "",
+    artist: str = "",
+    album: str = "",
     user: User = Depends(require_user_api),
     db: Session = Depends(get_db),
 ):
@@ -90,12 +94,46 @@ def songs_list(
         stmt = stmt.where(or_(Song.title.ilike(like), Song.artist.ilike(like)))
     if favorites == "1":
         stmt = stmt.where(Song.is_favorite.is_(True))
+    if artist:
+        stmt = stmt.where(Song.artist == artist)
+    if album:
+        stmt = stmt.where(Song.album == album)
 
     column = getattr(Song, field_name)
     stmt = stmt.order_by(column.desc() if descending else column.asc())
 
     songs = db.scalars(stmt).all()
     return JSONResponse({"songs": [_serialize(s) for s in songs]})
+
+
+def _group_user_songs(db: Session, user: User, key_fn, skip_empty_key: bool = False) -> list[dict]:
+    """Agrupa las canciones del usuario por la clave que devuelva key_fn (artista o álbum)."""
+    songs = db.scalars(
+        select(Song).where(Song.user_id == user.id).order_by(Song.created_at.desc())
+    ).all()
+    groups: dict[str, dict] = {}
+    for s in songs:
+        key = key_fn(s)
+        if skip_empty_key and not key:
+            continue
+        key = key or "Desconocido"
+        g = groups.setdefault(key, {"name": key, "count": 0, "thumbnail": ""})
+        g["count"] += 1
+        if not g["thumbnail"] and s.thumbnail:
+            g["thumbnail"] = s.thumbnail
+    return sorted(groups.values(), key=lambda g: g["name"].lower())
+
+
+@router.get("/api/artists", name="artists_list")
+def artists_list(user: User = Depends(require_user_api), db: Session = Depends(get_db)):
+    artists = _group_user_songs(db, user, lambda s: s.artist)
+    return JSONResponse({"artists": artists})
+
+
+@router.get("/api/albums", name="albums_list")
+def albums_list(user: User = Depends(require_user_api), db: Session = Depends(get_db)):
+    albums = _group_user_songs(db, user, lambda s: s.album, skip_empty_key=True)
+    return JSONResponse({"albums": albums})
 
 
 class DownloadRequest(BaseModel):
@@ -205,6 +243,7 @@ def download(
         user_id=user.id,
         title=info.get("title", "Unknown"),
         artist=info.get("uploader", "Unknown Artist"),
+        album=info.get("album") or "",
         youtube_url=url,
         youtube_id=yid,
         file_path=str(out_dir / f"{stem}.mp3"),

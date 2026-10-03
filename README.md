@@ -6,7 +6,9 @@
 
 **Tu biblioteca de música personal.** Pega un enlace de YouTube, descarga el audio y reprodúcelo desde cualquier dispositivo.
 
-[Características](#-características) · [Capturas](#-capturas) · [Despliegue](#-despliegue-con-docker) · [Configuración](#-configuración)
+![version](https://img.shields.io/badge/versi%C3%B3n-1.0.0-8a5cff)
+
+[Características](#-características) · [Capturas](#-capturas) · [Despliegue](#-despliegue-con-docker) · [Configuración](#-configuración) · [Changelog](CHANGELOG.md)
 
 </div>
 

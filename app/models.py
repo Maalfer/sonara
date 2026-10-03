@@ -40,6 +40,7 @@ class Song(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     title: Mapped[str] = mapped_column(String(400))
     artist: Mapped[str] = mapped_column(String(400), default="Unknown Artist")
+    album: Mapped[str] = mapped_column(String(400), default="")
     youtube_url: Mapped[str] = mapped_column(String(600))
     youtube_id: Mapped[str] = mapped_column(String(32), index=True)
     file_path: Mapped[str] = mapped_column(String(500))

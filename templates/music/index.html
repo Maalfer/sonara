@@ -5,7 +5,8 @@
 {% block content %}
 <div id="app" class="app-shell">
 
-  <aside class="sidebar">
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <img src="/static/images/logo.png" alt="Sonara" width="32" height="32">
       <span>Sonara</span>
@@ -23,6 +24,15 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
         <span>Más escuchadas</span>
       </button>
+      <div class="sidebar-divider"></div>
+      <button class="nav-item" data-nav="artists">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        <span>Artistas</span>
+      </button>
+      <button class="nav-item" data-nav="albums">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zm0 15a6 6 0 110-12 6 6 0 010 12zm0-8.5A2.5 2.5 0 1012 14a2.5 2.5 0 000-4.5z"/></svg>
+        <span>Álbumes</span>
+      </button>
     </nav>
     <div class="sidebar-spacer"></div>
     {% if user.is_staff %}
@@ -31,10 +41,14 @@
       <span>Administración</span>
     </a>
     {% endif %}
+    <div class="sidebar-version">Sonara v{{ version }}</div>
   </aside>
 
   <div class="main-area">
     <header class="topbar">
+      <button class="icon-btn" id="btn-menu-toggle" title="Menú" aria-label="Abrir menú" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>
+      </button>
       <div class="brand">
         <img src="/static/images/logo.png" alt="Sonara" width="28" height="28">
         <span>Sonara</span>

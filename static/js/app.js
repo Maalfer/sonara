@@ -55,12 +55,14 @@ const Theme = {
   },
 };
 
-const NAV_LABELS = { all: 'Toda la música', favorites: 'Favoritas', top: 'Más escuchadas' };
+const NAV_LABELS = { all: 'Toda la música', favorites: 'Favoritas', top: 'Más escuchadas', artists: 'Artistas', albums: 'Álbumes' };
+const GROUP_NAVS = ['artists', 'albums'];
 
 const Library = {
   songs: [],
+  groups: [],
   loading: false,
-  state: { search: '', sort: 'recent', nav: 'all' },
+  state: { search: '', sort: 'recent', nav: 'all', drill: null },
   view: localStorage.getItem('sn_view') || 'list',
 
   init(initialSongs) {
@@ -84,11 +86,16 @@ const Library = {
   async refresh() {
     this.loading = true;
     this.renderSkeleton();
-    const preset = this.navPresets[this.state.nav];
     const params = new URLSearchParams();
-    if (this.state.search) params.set('search', this.state.search);
-    params.set('sort', this.state.sort);
-    if (preset.favoritesOnly) params.set('favorites', '1');
+    if (this.state.drill) {
+      params.set(this.state.drill.type, this.state.drill.value);
+      params.set('sort', 'title');
+    } else {
+      const preset = this.navPresets[this.state.nav];
+      if (this.state.search) params.set('search', this.state.search);
+      params.set('sort', this.state.sort);
+      if (preset.favoritesOnly) params.set('favorites', '1');
+    }
     try {
       const res = await fetch(`/api/songs?${params.toString()}`, { headers: { 'X-Requested-With': 'fetch' } });
       if (res.status === 401) { window.location = '/login/'; return; }
@@ -100,6 +107,68 @@ const Library = {
     }
     this.loading = false;
     this.render();
+  },
+
+  async loadGroups() {
+    this.loading = true;
+    this.renderSkeleton();
+    try {
+      const res = await fetch(`/api/${this.state.nav}`, { headers: { 'X-Requested-With': 'fetch' } });
+      if (res.status === 401) { window.location = '/login/'; return; }
+      const data = await res.json();
+      this.groups = data[this.state.nav] || [];
+    } catch (e) {
+      Toast.show('No se pudo actualizar la biblioteca', 'error');
+      this.groups = [];
+    }
+    this.loading = false;
+    this.renderGroups();
+  },
+
+  openGroup(type, value) {
+    this.state.drill = { type: type === 'artists' ? 'artist' : 'album', value };
+    this.refresh();
+  },
+
+  backFromGroups() {
+    this.state.drill = null;
+    this.loadGroups();
+  },
+
+  renderGroups() {
+    const titleEl = document.getElementById('content-title');
+    if (titleEl) titleEl.textContent = NAV_LABELS[this.state.nav] || '';
+    const area = document.getElementById('content-area');
+
+    if (!this.groups.length) {
+      const emptyMsg = this.state.nav === 'albums'
+        ? `<p>Todavía no hay álbumes</p><p class="empty-sub">Aparecerán aquí cuando las canciones descargadas incluyan esa información</p>`
+        : `<p>Tu biblioteca está vacía</p><p class="empty-sub">Pulsa <strong>+</strong> para traer tu primera canción de YouTube</p>`;
+      area.innerHTML = `
+        <div class="empty-state">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor" class="empty-icon"><path d="M12 3v9.28a4.39 4.39 0 00-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/></svg>
+          ${emptyMsg}
+        </div>`;
+      return;
+    }
+
+    const isArtists = this.state.nav === 'artists';
+    const cards = this.groups.map((g) => `
+      <div class="group-card" data-group-name="${escapeHtml(g.name)}">
+        <div class="group-thumb-wrap${isArtists ? ' round' : ''}">
+          ${g.thumbnail
+            ? `<img src="${escapeHtml(g.thumbnail)}" alt="" class="group-thumb" loading="lazy" onerror="this.onerror=null;this.src=FALLBACK_THUMB">`
+            : `<div class="group-thumb-placeholder">${this.state.nav === 'artists' ? artistIcon() : albumIcon()}</div>`}
+        </div>
+        <div class="group-name">${escapeHtml(g.name)}</div>
+        <div class="group-count">${g.count} ${g.count === 1 ? 'canción' : 'canciones'}</div>
+      </div>`).join('');
+
+    area.innerHTML = `<div class="page-library fade-in"><div class="group-grid">${cards}</div></div>`;
+
+    area.querySelectorAll('.group-card').forEach((card) => {
+      card.addEventListener('click', () => this.openGroup(this.state.nav, card.dataset.groupName));
+    });
   },
 
   renderSkeleton() {
@@ -127,7 +196,17 @@ const Library = {
   render() {
     const area = document.getElementById('content-area');
     const titleEl = document.getElementById('content-title');
-    if (titleEl) titleEl.textContent = NAV_LABELS[this.state.nav] || 'Biblioteca';
+    if (titleEl) {
+      if (this.state.drill) {
+        titleEl.innerHTML = `<button class="icon-btn content-back-btn" id="content-back-btn" title="Volver">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button><span>${escapeHtml(this.state.drill.value)}</span>`;
+        const backBtn = document.getElementById('content-back-btn');
+        if (backBtn) backBtn.addEventListener('click', () => this.backFromGroups());
+      } else {
+        titleEl.textContent = NAV_LABELS[this.state.nav] || 'Biblioteca';
+      }
+    }
 
     if (!this.songs.length) {
       const emptyMsg = this.state.search
@@ -239,18 +318,30 @@ const Library = {
     buttons.forEach((btn) => {
       btn.addEventListener('click', () => {
         const nav = btn.dataset.nav;
-        if (this.state.nav === nav) return;
+        if (this.state.nav === nav && !this.state.drill) return;
         this.state.nav = nav;
-        const preset = this.navPresets[nav];
-        this.state.sort = preset.sort;
+        this.state.drill = null;
 
         document.querySelectorAll('[data-nav]').forEach((b) => b.classList.toggle('active', b.dataset.nav === nav));
         const sortSelect = document.getElementById('sort-select');
-        if (sortSelect) {
-          sortSelect.value = preset.sort;
-          sortSelect.classList.toggle('hidden', !preset.showSort);
+        const viewToggle = document.querySelector('.view-toggle');
+        const isGroupNav = GROUP_NAVS.includes(nav);
+        if (viewToggle) viewToggle.classList.toggle('hidden', isGroupNav);
+
+        if (isGroupNav) {
+          if (sortSelect) sortSelect.classList.add('hidden');
+          this.loadGroups();
+        } else {
+          const preset = this.navPresets[nav];
+          this.state.sort = preset.sort;
+          if (sortSelect) {
+            sortSelect.value = preset.sort;
+            sortSelect.classList.toggle('hidden', !preset.showSort);
+          }
+          this.refresh();
         }
-        this.refresh();
+
+        if (typeof Sidebar !== 'undefined') Sidebar.closeMobile();
       });
     });
   },
@@ -469,10 +560,63 @@ function playIcon() {
 function dotsIcon() {
   return '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>';
 }
+function artistIcon() {
+  return '<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+}
+function albumIcon() {
+  return '<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zm0 15a6 6 0 110-12 6 6 0 010 12zm0-8.5A2.5 2.5 0 1012 14a2.5 2.5 0 000-4.5z"/></svg>';
+}
+
+const Sidebar = {
+  KEY: 'sn_sidebar_collapsed',
+  DESKTOP_MQ: '(min-width: 960px)',
+
+  init() {
+    this.app = document.getElementById('app');
+    this.sidebar = document.getElementById('sidebar');
+    this.backdrop = document.getElementById('sidebar-backdrop');
+    this.toggleBtn = document.getElementById('btn-menu-toggle');
+    if (!this.app || !this.sidebar || !this.toggleBtn) return;
+
+    const collapsed = localStorage.getItem(this.KEY) === '1';
+    this.app.classList.toggle('sidebar-collapsed', collapsed);
+    this.toggleBtn.setAttribute('aria-expanded', String(!collapsed));
+
+    this.toggleBtn.addEventListener('click', () => this.toggle());
+    if (this.backdrop) this.backdrop.addEventListener('click', () => this.closeMobile());
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') this.closeMobile();
+    });
+  },
+
+  isDesktop() {
+    return window.matchMedia(this.DESKTOP_MQ).matches;
+  },
+
+  toggle() {
+    if (this.isDesktop()) {
+      const collapsed = this.app.classList.toggle('sidebar-collapsed');
+      localStorage.setItem(this.KEY, collapsed ? '1' : '0');
+      this.toggleBtn.setAttribute('aria-expanded', String(!collapsed));
+    } else {
+      const open = this.sidebar.classList.toggle('open');
+      if (this.backdrop) this.backdrop.classList.toggle('visible', open);
+      this.toggleBtn.setAttribute('aria-expanded', String(open));
+    }
+  },
+
+  closeMobile() {
+    if (this.isDesktop()) return;
+    this.sidebar.classList.remove('open');
+    if (this.backdrop) this.backdrop.classList.remove('visible');
+    this.toggleBtn.setAttribute('aria-expanded', 'false');
+  },
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   Theme.init();
   Confirm.init();
+  Sidebar.init();
   Library.init(window.INITIAL_SONGS);
   AddModal.init();
 
