@@ -222,8 +222,8 @@
 window.INITIAL_SONGS = {{ songs_json|safe }};
 window.CSRF_TOKEN = "{{ csrf_token }}";
 </script>
-<script src="/static/js/player.js?v=5"></script>
-<script src="/static/js/app.js?v=5"></script>
+<script src="/static/js/player.js?v=6"></script>
+<script src="/static/js/app.js?v=6"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {}));

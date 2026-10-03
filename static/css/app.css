@@ -9,7 +9,7 @@
   --text-dim: #9a9ab0;
   --accent-1: #8a5cff;
   --accent-2: #ff5cad;
-  --accent-grad: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --accent-grad: var(--accent-2);
   --danger: #ff5c6c;
   --success: #3ddc97;
   --radius: 14px;
